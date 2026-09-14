@@ -1,11 +1,22 @@
-# Supabase Datenbank
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_KEY=your-anon-key-here
-
-# Email-Versand (Gmail)
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-app-password-here
-EMAIL_ENABLED=true
-
-# Optional: Vercel Analytics
-NEXT_PUBLIC_VERCEL_ANALYTICS_ID=
+{
+  "name": "farmers-vacation",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "next": "^14.0.0",
+    "@supabase/supabase-js": "^2.38.0",
+    "nodemailer": "^6.9.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.50.0",
+    "eslint-config-next": "^14.0.0"
+  }
+}
