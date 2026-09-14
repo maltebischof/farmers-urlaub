@@ -209,7 +209,7 @@ function App({ me }){
   const pendingCount = canApprove ? pendingForMe().length : 0;
   const tabs = [['overview','Übersicht'],['calendar','Kalender'],['requests','Meine Abwesenheiten']];
   if(canApprove) tabs.push(['approvals', `Genehmigungen${pendingCount?` (${pendingCount})`:''}`]);
-  if(isManager) tabs.push(['team','Auswertung']);
+  if(isManager || isLead) tabs.push(['team','Auswertung']);
   if(canAdmin) tabs.push(['admin','Verwaltung']);
 
   return (
@@ -239,13 +239,13 @@ function App({ me }){
         {tab==='calendar' && <CalendarView me={me} calDate={calDate} setCalDate={setCalDate} employees={employees} requests={requests} empById={empById} canSeeSick={canSeeSick} />}
         {tab==='requests' && <MyRequests me={me} requests={requests} refresh={refresh} flash={flash} />}
         {tab==='approvals' && canApprove && <Approvals pending={pendingForMe()} empById={empById} refresh={refresh} flash={flash} />}
-        {tab==='team' && isManager && <TeamView employees={employees} usedDays={usedDays} sickDays={sickDays} flash={flash} refresh={refresh} />}
+        {tab==='team' && (isManager||isLead) && <TeamView employees={isManager?employees:teamEmployees()} usedDays={usedDays} sickDays={sickDays} flash={flash} refresh={refresh} canCarryOver={isManager} />}
         {tab==='admin' && canAdmin && <AdminView me={me} scope={teamEmployees()} refresh={refresh} flash={flash} isManager={isManager} />}
       </main>
 
       <footer style={{borderTop:`1px solid ${LINE}`,background:'#fff'}}>
         <div style={{maxWidth:1120,margin:'0 auto',padding:'16px 22px',display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12.5,color:MUTED,flexWrap:'wrap',gap:8}}>
-          <span>Farmers Food GmbH · Urlaubsverwaltung</span>
+          <span>Farmers Food GmbH · Urlaubsverwaltung · Stand v4</span>
           <span style={{color:GREEN_DARK,fontWeight:700}}>Excellence since 1993</span>
         </div>
       </footer>
@@ -395,7 +395,7 @@ function Approvals({ pending, empById, refresh, flash }){
 }
 
 /* ===================== Auswertung (Team) ===================== */
-function TeamView({ employees, usedDays, sickDays, flash, refresh }){
+function TeamView({ employees, usedDays, sickDays, flash, refresh, canCarryOver }){
   function exportCSV(){
     const rows = [['Name','Email','Rolle','Team','Anspruch','Übertrag','Bereits genommen','Urlaub gesamt','Urlaub beantragt','Resturlaub','Krankheitstage']];
     employees.forEach(e=>{
@@ -421,9 +421,9 @@ function TeamView({ employees, usedDays, sickDays, flash, refresh }){
   }
   return (
     <>
-      <PageTitle title="Auswertung" sub={`Urlaub & Krankheit aller Mitarbeiter · ${new Date().getFullYear()}`}
+      <PageTitle title="Auswertung" sub={`Urlaub & Krankheit ${canCarryOver?'aller Mitarbeiter':'deines Teams'} · ${new Date().getFullYear()}`}
         action={<div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-          <button onClick={carryOver} style={{...btnGhost,padding:'7px 12px',fontSize:13}}>↪ Jahreswechsel</button>
+          {canCarryOver && <button onClick={carryOver} style={{...btnGhost,padding:'7px 12px',fontSize:13}}>↪ Jahreswechsel</button>}
           <button onClick={exportCSV} style={{...btnGhost,padding:'7px 12px',fontSize:13}}>⬇ CSV Export</button>
         </div>} />
       <div style={card}>
