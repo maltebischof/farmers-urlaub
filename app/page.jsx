@@ -19,8 +19,8 @@ const OK_SOFT = '#e4f2e4';
 const RED = '#b23b3b';
 const RED_SOFT = '#f6e4e4';
 
-const LOGO_MARK = '/farmers-logo-mark.png';
-const LOGO_FULL = '/farmers-logo.png';
+const LOGO_MARK = '/farmers-logo-mark.jpg';
+const LOGO_FULL = '/farmers-logo.jpg';
 
 const MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 const DOW = ['Mo','Di','Mi','Do','Fr','Sa','So'];
@@ -238,7 +238,7 @@ function App({ me, setMe }){
         {tab==='calendar' && <CalendarView me={me} calDate={calDate} setCalDate={setCalDate} teamEmployees={teamEmployees} requests={requests} empById={empById} />}
         {tab==='requests' && <MyRequests me={me} requests={requests} refresh={refresh} flash={flash} />}
         {tab==='approvals' && canApprove && <Approvals pending={pendingForMe()} empById={empById} refresh={refresh} flash={flash} />}
-        {tab==='team' && isManager && <TeamView employees={employees} usedDays={usedDays} flash={flash} />}
+        {tab==='team' && isManager && <TeamView employees={employees} usedDays={usedDays} flash={flash} refresh={refresh} />}
         {tab==='admin' && canAdmin && <AdminView me={me} employees={teamEmployees()} refresh={refresh} flash={flash} isManager={isManager} />}
       </main>
 
@@ -256,10 +256,13 @@ function App({ me, setMe }){
 
 /* ===================== Views ===================== */
 function Overview({ me, usedDays, requests }){
-  const used = usedDays(me.id,'approved');
+  const manual = me.used_days_manual || 0;
+  const carried = me.carried_days || 0;
+  const used = usedDays(me.id,'approved') + manual;
   const pending = usedDays(me.id,'pending');
-  const remaining = me.allowed_days - used;
-  const pct = Math.min(100, Math.round(used / me.allowed_days * 100));
+  const available = me.allowed_days + carried;
+  const remaining = available - used;
+  const pct = Math.min(100, Math.round(used / available * 100));
   const mine = requests.filter(r=>r.employee_id===me.id).sort((a,b)=>b.start_date.localeCompare(a.start_date)).slice(0,5);
 
   return (
@@ -269,12 +272,12 @@ function Overview({ me, usedDays, requests }){
         <div style={{...card,background:GREEN,border:`1px solid ${GREEN}`}}>
           <div style={{fontSize:13,color:'rgba(255,255,255,.85)',fontWeight:500}}>Verbleibend</div>
           <div style={{fontSize:38,fontWeight:800,color:'#fff',lineHeight:1.1,marginTop:4}}>{remaining}</div>
-          <div style={{fontSize:12.5,color:'rgba(255,255,255,.85)',marginTop:2}}>von {me.allowed_days} Tagen</div>
+          <div style={{fontSize:12.5,color:'rgba(255,255,255,.85)',marginTop:2}}>von {available} Tagen{carried>0?` (inkl. ${carried} Übertrag)`:''}</div>
         </div>
         <div style={card}>
           <div style={statLabel}>Genommen</div>
           <div style={statNum}>{used}</div>
-          <div style={statFoot}>genehmigte Tage</div>
+          <div style={statFoot}>{manual>0?`inkl. ${manual} vor Systemstart`:'genehmigte Tage'}</div>
           <div style={bar}><div style={{...barFill,width:`${pct}%`}} /></div>
         </div>
         <div style={card}>
@@ -377,33 +380,51 @@ function Approvals({ pending, empById, refresh, flash }){
   );
 }
 
-function TeamView({ employees, usedDays, flash }){
+function TeamView({ employees, usedDays, flash, refresh }){
   function exportCSV(){
-    const rows = [['Name','Email','Rolle','Team','Anspruch','Genommen','Beantragt','Verbleibend']];
+    const rows = [['Name','Email','Rolle','Team','Anspruch','Übertrag','Bereits genommen','Genommen gesamt','Beantragt','Verbleibend']];
     employees.forEach(e=>{
-      const used=usedDays(e.id,'approved'), pend=usedDays(e.id,'pending');
-      rows.push([e.name,e.email,roleLabel(e.role),e.team||'',e.allowed_days,used,pend,e.allowed_days-used]);
+      const manual=e.used_days_manual||0, carried=e.carried_days||0;
+      const totalUsed=usedDays(e.id,'approved')+manual, pend=usedDays(e.id,'pending');
+      const available=e.allowed_days+carried, rem=available-totalUsed;
+      rows.push([e.name,e.email,roleLabel(e.role),e.team||'',e.allowed_days,carried,manual,totalUsed,pend,rem]);
     });
     const csv = rows.map(r=>r.map(c=>`"${c}"`).join(';')).join('\n');
     const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'});
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`Urlaub_${new Date().getFullYear()}.csv`; a.click();
     flash('CSV heruntergeladen');
   }
+  async function carryOver(){
+    const ok = confirm('Jahreswechsel durchführen?\n\nFür jeden Mitarbeiter wird der aktuelle Resturlaub als „Übertrag aus Vorjahr" gespeichert und „bereits genommen" auf 0 gesetzt.\n\nNur EINMAL zu Jahresbeginn ausführen.');
+    if(!ok) return;
+    for(const e of employees){
+      const manual=e.used_days_manual||0, carried=e.carried_days||0;
+      const rem=(e.allowed_days+carried)-(usedDays(e.id,'approved')+manual);
+      await supabase.from('employees').update({ carried_days: rem, used_days_manual: 0 }).eq('id', e.id);
+    }
+    flash('Jahreswechsel abgeschlossen'); refresh();
+  }
   return (
     <>
       <PageTitle title="Team-Übersicht" sub={`Urlaubsstatus aller Mitarbeiter · ${new Date().getFullYear()}`}
-        action={<button onClick={exportCSV} style={{...btnGhost,padding:'7px 12px',fontSize:13}}>⬇ CSV Export</button>} />
+        action={<div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+          <button onClick={carryOver} style={{...btnGhost,padding:'7px 12px',fontSize:13}}>↪ Jahreswechsel</button>
+          <button onClick={exportCSV} style={{...btnGhost,padding:'7px 12px',fontSize:13}}>⬇ CSV Export</button>
+        </div>} />
       <div style={card}>
-        <table style={table}><thead><tr><Th>Mitarbeiter</Th><Th>Team</Th><Th>Genommen</Th><Th>Beantragt</Th><Th>Verbleibend</Th><Th>Auslastung</Th></tr></thead>
+        <table style={table}><thead><tr><Th>Mitarbeiter</Th><Th>Team</Th><Th>Übertrag</Th><Th>Genommen</Th><Th>Beantragt</Th><Th>Verbleibend</Th><Th>Auslastung</Th></tr></thead>
         <tbody>
           {employees.map(e=>{
-            const used=usedDays(e.id,'approved'), pend=usedDays(e.id,'pending'), rem=e.allowed_days-used;
-            const pct=Math.min(100,Math.round(used/e.allowed_days*100));
+            const manual=e.used_days_manual||0, carried=e.carried_days||0;
+            const used=usedDays(e.id,'approved')+manual, pend=usedDays(e.id,'pending');
+            const available=e.allowed_days+carried, rem=available-used;
+            const pct=Math.min(100,Math.round(used/available*100));
             return (
               <tr key={e.id}>
                 <Td><NameCell name={e.name} sub={roleLabel(e.role)} /></Td>
                 <Td>{e.team && e.team!=='Management'?e.team:'—'}</Td>
-                <Td>{used} / {e.allowed_days}</Td>
+                <Td>{carried?`+${carried}`:'—'}</Td>
+                <Td>{used} / {available}</Td>
                 <Td>{pend||'—'}</Td>
                 <Td><b>{rem}</b></Td>
                 <Td><div style={{...bar,margin:0,minWidth:110}}><div style={{...barFill,width:`${pct}%`}} /></div></Td>
@@ -460,12 +481,14 @@ function EmpModal({ me, isManager, initial, onClose, onSaved, flash }){
   const [role, setRole] = useState(initial?.role || 'Sales');
   const [team, setTeam] = useState(initial?.team || (me.team!=='Management'?me.team:'Randy'));
   const [days, setDays] = useState(initial?.allowed_days ?? 28);
+  const [carried, setCarried] = useState(initial?.carried_days ?? 0);
+  const [manual, setManual] = useState(initial?.used_days_manual ?? 0);
   const [busy, setBusy] = useState(false);
 
   async function save(){
     if(!name || !email){ flash('Name und E-Mail sind erforderlich'); return; }
     setBusy(true);
-    const payload = { name, email: email.trim().toLowerCase(), role, team, allowed_days: Number(days)||0 };
+    const payload = { name, email: email.trim().toLowerCase(), role, team, allowed_days: Number(days)||0, carried_days: Number(carried)||0, used_days_manual: Number(manual)||0 };
     let error;
     if(isEdit){ ({ error } = await supabase.from('employees').update(payload).eq('id', initial.id)); }
     else { ({ error } = await supabase.from('employees').insert([payload])); }
@@ -499,6 +522,11 @@ function EmpModal({ me, isManager, initial, onClose, onSaved, flash }){
         <select value={team} onChange={e=>setTeam(e.target.value)} style={inp}>
           {TEAMS.map(t=><option key={t} value={t}>{t}</option>)}
         </select>
+        <div style={{height:12}} />
+        <div style={{display:'flex',gap:12}}>
+          <div style={{flex:1}}><Label>Übertrag aus Vorjahr</Label><input type="number" min="0" value={carried} onChange={e=>setCarried(e.target.value)} style={inp} /></div>
+          <div style={{flex:1}}><Label>Bereits genommen (dieses Jahr)</Label><input type="number" min="0" value={manual} onChange={e=>setManual(e.target.value)} style={inp} /></div>
+        </div>
         <div style={{display:'flex',gap:10,marginTop:20}}>
           <button onClick={onClose} style={{...btnGhost,flex:1}}>Abbrechen</button>
           <button onClick={save} disabled={busy} style={{...btnPrimary,flex:1,opacity:busy?.6:1}}>{isEdit?'Speichern':'Anlegen'}</button>
