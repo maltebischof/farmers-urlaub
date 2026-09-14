@@ -23,7 +23,7 @@ export default function VacationApp() {
   // Fetch employees
   useEffect(() => {
     const fetchEmployees = async () => {
-      const { data } = await supabase.from('employees').select('*').order('role DESC').order('team ASC').order('name ASC');
+      const { data } = await supabase.from('employees').select('*').order('role', { ascending: false }).order('team', { ascending: true }).order('name', { ascending: true });
       setEmployees(data || []);
       if (data && data.length > 0) {
         setSelectedEmployee(data[0]);
@@ -91,7 +91,7 @@ export default function VacationApp() {
       alert('Mitarbeiter hinzugefügt!');
       setNewEmployee({ name: '', email: '', role: 'Sales', team: 'Randy', allowed_days: 28 });
       
-      const { data: updated } = await supabase.from('employees').select('*').order('role DESC').order('team ASC');
+      const { data: updated } = await supabase.from('employees').select('*').order('role', { ascending: false }).order('team', { ascending: true });
       setEmployees(updated || []);
     }
   };
@@ -108,7 +108,7 @@ export default function VacationApp() {
       alert('Mitarbeiter aktualisiert!');
       setEditingEmployee(null);
       
-      const { data: updated } = await supabase.from('employees').select('*').order('role DESC').order('team ASC');
+      const { data: updated } = await supabase.from('employees').select('*').order('role', { ascending: false }).order('team', { ascending: true });
       setEmployees(updated || []);
     }
   };
@@ -122,7 +122,7 @@ export default function VacationApp() {
       } else {
         alert('Mitarbeiter gelöscht!');
         
-        const { data: updated } = await supabase.from('employees').select('*').order('role DESC').order('team ASC');
+        const { data: updated } = await supabase.from('employees').select('*').order('role', { ascending: false }).order('team', { ascending: true });
         setEmployees(updated || []);
       }
     }
