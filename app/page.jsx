@@ -47,43 +47,16 @@ function translateAuthError(msg=''){
 
 /* ===================== Root ===================== */
 
-/* ===================== Logo (Vektor) ===================== */
+
+/* ===================== Wortmarke ===================== */
 function LogoMark({ height=28 }){
-  return (
-    <svg viewBox="0 0 560 152" style={{height, width:'auto', display:'block'}} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Farmers">
-      <defs>
-        <linearGradient id="fmRim" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#93d926" />
-          <stop offset="1" stopColor="#37870d" />
-        </linearGradient>
-        <linearGradient id="fmFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#7ac70f" />
-          <stop offset="1" stopColor="#3f8f00" />
-        </linearGradient>
-        <linearGradient id="fmGloss" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ffffff" stopOpacity="0.55" />
-          <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
-        </linearGradient>
-        <linearGradient id="fmText" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ffffff" />
-          <stop offset="0.58" stopColor="#ffffff" />
-          <stop offset="1" stopColor="#c9d4c4" />
-        </linearGradient>
-      </defs>
-      <ellipse cx="280" cy="76" rx="278" ry="74" fill="url(#fmRim)" />
-      <ellipse cx="280" cy="76" rx="266" ry="63" fill="#ffffff" />
-      <ellipse cx="280" cy="76" rx="252" ry="53" fill="url(#fmFill)" />
-      <ellipse cx="280" cy="54" rx="240" ry="32" fill="url(#fmGloss)" />
-      <text x="280" y="102" textAnchor="middle" fontFamily="'Arial Black','Arial Narrow',Arial,sans-serif" fontWeight="900" fontSize="82" letterSpacing="-4" fill="url(#fmText)" stroke="#3b7d00" strokeWidth="1.4" textLength="470" lengthAdjust="spacingAndGlyphs">FARMERS</text>
-      <text x="516" y="52" textAnchor="middle" fontFamily="Arial,sans-serif" fontWeight="700" fontSize="20" fill="#ffffff">&#174;</text>
-    </svg>
-  );
+  return <span style={{fontSize:height,fontWeight:800,color:'#6AB801',letterSpacing:'-.02em',lineHeight:1,whiteSpace:'nowrap'}}>Farmers Food</span>;
 }
 function LogoFull({ width=240 }){
   return (
-    <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:width*0.03}}>
-      <LogoMark height={width*0.27} />
-      <div style={{fontSize:Math.max(11,width*0.062),fontStyle:'italic',fontWeight:700,color:'#4d8600'}}>Farmers Food – Qualität beflügelt!</div>
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+      <span style={{fontSize:width*0.16,fontWeight:800,color:'#6AB801',letterSpacing:'-.02em',lineHeight:1}}>Farmers Food</span>
+      <span style={{fontSize:Math.max(11,width*0.055),fontStyle:'italic',fontWeight:600,color:'#4d8600'}}>Qualität beflügelt!</span>
     </div>
   );
 }
@@ -285,7 +258,7 @@ function App({ me }){
 
       <footer style={{borderTop:`1px solid ${LINE}`,background:'#fff'}}>
         <div style={{maxWidth:1120,margin:'0 auto',padding:'16px 22px',display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12.5,color:MUTED,flexWrap:'wrap',gap:8}}>
-          <span>Farmers Food GmbH · Urlaubsverwaltung · Stand v5</span>
+          <span>Farmers Food GmbH · Urlaubsverwaltung · Stand v6</span>
           <span style={{color:GREEN_DARK,fontWeight:700}}>Excellence since 1993</span>
         </div>
       </footer>
