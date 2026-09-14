@@ -216,7 +216,7 @@ function App({ me, setMe }){
       <header style={{background:'#fff',borderBottom:`1px solid ${LINE}`,position:'sticky',top:0,zIndex:50}}>
         <div style={{height:4,background:GREEN}} />
         <div style={{maxWidth:1120,margin:'0 auto',padding:'12px 22px',display:'flex',alignItems:'center',gap:16}}>
-          <img src={LOGO_MARK} alt="Farmers" style={{height:38,width:'auto'}} />
+          <img src={LOGO_MARK} alt="Farmers" style={{height:30,width:'auto'}} />
           <div style={{fontWeight:700,fontSize:16,color:INK}}>Urlaubsverwaltung</div>
           <div style={{flex:1}} />
           <div style={{textAlign:'right',lineHeight:1.25}}>
