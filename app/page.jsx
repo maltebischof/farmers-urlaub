@@ -304,25 +304,25 @@ function App({ me }){
     <div style={{minHeight:'100vh',background:BG,fontFamily:'system-ui,-apple-system,sans-serif',color:INK}}>
       <header style={{background:'#fff',borderBottom:`1px solid ${LINE}`,position:'sticky',top:0,zIndex:50}}>
         <div style={{height:4,background:GREEN}} />
-        <div style={{maxWidth:1120,margin:'0 auto',padding:'12px 22px',display:'flex',alignItems:'center',gap:14}}>
-          <LogoMark height={26} />
-          <div style={{fontWeight:700,fontSize:16,color:INK}}>Urlaubsverwaltung</div>
+        <div style={{maxWidth:1120,margin:'0 auto',padding:'12px clamp(14px,4vw,22px)',display:'flex',alignItems:'center',gap:12}}>
+          <LogoMark height={24} />
+          <div className="fm-hide-sm" style={{fontWeight:700,fontSize:16,color:INK}}>Urlaubsverwaltung</div>
           <div style={{flex:1}} />
-          <div style={{textAlign:'right',lineHeight:1.25}}>
+          <div className="fm-hide-sm" style={{textAlign:'right',lineHeight:1.25}}>
             <div style={{fontWeight:700,fontSize:14}}>{me.name}</div>
             <div style={{fontSize:11.5,color:MUTED}}>{roleLabel(me.role)}{me.team && me.team!=='Management'?` · Team ${me.team}`:''}</div>
           </div>
-          <div style={{width:36,height:36,borderRadius:'50%',background:GREEN_SOFT,color:GREEN_DARK,fontWeight:700,fontSize:13,display:'flex',alignItems:'center',justifyContent:'center'}}>{initials(me.name)}</div>
-          <button onClick={()=>supabase.auth.signOut()} style={{...btnGhost,padding:'8px 12px',fontSize:13}}>Abmelden</button>
+          <div title={me.name} style={{width:36,height:36,borderRadius:'50%',background:GREEN_SOFT,color:GREEN_DARK,fontWeight:700,fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{initials(me.name)}</div>
+          <button onClick={()=>supabase.auth.signOut()} style={{...btnGhost,padding:'8px 12px',fontSize:13,flexShrink:0}}>Abmelden</button>
         </div>
-        <nav style={{maxWidth:1120,margin:'0 auto',padding:'0 22px',display:'flex',gap:4,overflowX:'auto'}}>
+        <nav style={{maxWidth:1120,margin:'0 auto',padding:'0 clamp(14px,4vw,22px)',display:'flex',gap:4,overflowX:'auto'}}>
           {tabs.map(([k,l])=>(
             <button key={k} onClick={()=>setTab(k)} style={{padding:'12px 15px',fontSize:14,fontWeight:600,whiteSpace:'nowrap',color:tab===k?GREEN_DARK:MUTED,borderBottom:`2.5px solid ${tab===k?GREEN:'transparent'}`,background:'none',cursor:'pointer'}}>{l}</button>
           ))}
         </nav>
       </header>
 
-      <main style={{maxWidth:1120,margin:'0 auto',padding:'26px 22px 60px'}}>
+      <main style={{maxWidth:1120,margin:'0 auto',padding:'clamp(16px,4vw,26px) clamp(14px,4vw,22px) 60px'}}>
         {tab==='overview' && <Overview me={me} usedDays={usedDays} sickDays={sickDays} requests={requests} />}
         {tab==='calendar' && <CalendarView me={me} calDate={calDate} setCalDate={setCalDate} employees={employees} requests={requests} empById={empById} canSeeSick={canSeeSick} handlers={handlers} />}
         {tab==='requests' && <MyRequests me={me} requests={requests} refresh={refresh} flash={flash} handlers={handlers} />}
@@ -333,7 +333,7 @@ function App({ me }){
 
       <footer style={{borderTop:`1px solid ${LINE}`,background:'#fff'}}>
         <div style={{maxWidth:1120,margin:'0 auto',padding:'16px 22px',display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12.5,color:MUTED,flexWrap:'wrap',gap:8}}>
-          <span>Farmers Food GmbH · Urlaubsverwaltung · Stand v11</span>
+          <span>Farmers Food GmbH · Urlaubsverwaltung · Stand v12</span>
           <span style={{color:GREEN_DARK,fontWeight:700}}>Excellence since 1993</span>
         </div>
       </footer>
@@ -1054,16 +1054,16 @@ function RequestTable({ list, renderActions }){
 }
 
 /* ===================== Style objects ===================== */
-const card = { background:'#fff', border:`1px solid ${LINE}`, borderRadius:14, padding:20, boxShadow:'0 1px 3px rgba(28,35,24,.06)' };
-const grid3 = { display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 };
-const grid2 = { display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:16 };
+const card = { background:'#fff', border:`1px solid ${LINE}`, borderRadius:14, padding:20, boxShadow:'0 1px 3px rgba(28,35,24,.06)', overflowX:'auto', WebkitOverflowScrolling:'touch' };
+const grid3 = { display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(230px, 1fr))', gap:16 };
+const grid2 = { display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:16 };
 const statLabel = { fontSize:13, color:MUTED, fontWeight:500 };
 const statNum = { fontSize:38, fontWeight:800, letterSpacing:'-.03em', lineHeight:1.1, marginTop:4, color:INK };
 const statFoot = { fontSize:12.5, color:MUTED, marginTop:2 };
 const bar = { height:7, borderRadius:99, background:GREEN_SOFT, marginTop:14, overflow:'hidden' };
 const barFill = { height:'100%', background:GREEN, borderRadius:99 };
 const table = { width:'100%', borderCollapse:'collapse', fontSize:14 };
-const inp = { width:'100%', padding:'10px 12px', border:`1px solid ${LINE}`, borderRadius:10, background:'#fff', color:INK, outline:'none', fontSize:15, boxSizing:'border-box' };
+const inp = { width:'100%', padding:'11px 12px', border:`1px solid ${LINE}`, borderRadius:10, background:'#fff', color:INK, outline:'none', fontSize:16, boxSizing:'border-box' };
 const btnPrimary = { display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, padding:'11px 18px', borderRadius:10, fontWeight:650, fontSize:14.5, background:GREEN, color:'#fff', border:'none', cursor:'pointer' };
 const btnSick = { ...btnPrimary, background:SICK };
 const btnGhost = { display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, padding:'11px 18px', borderRadius:10, fontWeight:600, fontSize:14, background:BG, color:INK, border:`1px solid ${LINE}`, cursor:'pointer' };
@@ -1074,4 +1074,4 @@ const segOn = { flex:1, padding:'9px 12px', borderRadius:9, fontWeight:650, font
 const segOnSick = { flex:1, padding:'9px 12px', borderRadius:9, fontWeight:650, fontSize:14, background:SICK, color:'#fff', border:`1px solid ${SICK}`, cursor:'pointer' };
 const segOff = { flex:1, padding:'9px 12px', borderRadius:9, fontWeight:600, fontSize:14, background:BG, color:INK, border:`1px solid ${LINE}`, cursor:'pointer' };
 const modalBack = { position:'fixed', inset:0, background:'rgba(28,35,24,.45)', display:'flex', alignItems:'center', justifyContent:'center', padding:20, zIndex:80 };
-const modalBox = { background:'#fff', borderRadius:18, padding:26, width:'100%', maxWidth:460, boxShadow:'0 20px 60px rgba(0,0,0,.25)', maxHeight:'90vh', overflowY:'auto' };
+const modalBox = { background:'#fff', borderRadius:18, padding:'clamp(18px,5vw,26px)', width:'100%', maxWidth:460, boxShadow:'0 20px 60px rgba(0,0,0,.25)', maxHeight:'90vh', overflowY:'auto' };
