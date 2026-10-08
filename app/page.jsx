@@ -179,10 +179,48 @@ function App({ me }){
   function flash(msg){ setToast(msg); setTimeout(()=>setToast(''), 2800); }
 
   async function refresh(){
-    const { data: emps } = await supabase.from('employees').select('*').order('name', { ascending: true });
-    const { data: reqs } = await supabase.from('vacation_requests').select('*');
-    setEmployees(emps || []);
-    setRequests(reqs || []);
+    // Geschäftsführung: alle Daten voll
+    if(isManager){
+      const { data: emps } = await supabase.from('employees').select('*').order('name', { ascending: true });
+      const { data: reqs } = await supabase.from('vacation_requests').select('*');
+      setEmployees(emps || []); setRequests(reqs || []);
+      return;
+    }
+
+    // Teamleitung / Mitarbeiter: nur der erlaubte Bereich mit vollen Details
+    let scopedEmps = [], scopedReqs = [], scopeIds = [];
+    if(isLead){
+      const { data: emps } = await supabase.from('employees').select('*').eq('team', me.team).order('name', { ascending: true });
+      scopedEmps = emps || [];
+      scopeIds = scopedEmps.map(e=>e.id);
+      const { data: reqs } = scopeIds.length
+        ? await supabase.from('vacation_requests').select('*').in('employee_id', scopeIds)
+        : { data: [] };
+      scopedReqs = reqs || [];
+    } else {
+      scopedEmps = [me];
+      scopeIds = [me.id];
+      const { data: reqs } = await supabase.from('vacation_requests').select('*').eq('employee_id', me.id);
+      scopedReqs = reqs || [];
+    }
+
+    // Öffentlicher Kalender-Feed: Namen aller + genehmigte Urlaube der anderen
+    // (nur Name + Zeitraum, KEINE Gründe, keine Resturlaube, keine Krankmeldungen, keine offenen Anträge)
+    const { data: allEmps } = await supabase.from('employees').select('id,name,team').order('name', { ascending: true });
+    const { data: pubVac } = await supabase.from('vacation_requests')
+      .select('employee_id,start_date,end_date')
+      .eq('status','approved').eq('type','vacation');
+    const scopeSet = new Set(scopeIds);
+    const pubMin = (pubVac || [])
+      .filter(r => !scopeSet.has(r.employee_id))
+      .map(r => ({ id:'pub-'+r.employee_id+'-'+r.start_date+'-'+r.end_date, employee_id:r.employee_id, start_date:r.start_date, end_date:r.end_date, type:'vacation', status:'approved', reason:'' }));
+
+    // Mitarbeiter zusammenführen: Namen für alle (minimal), eigene/Team-Datensätze voll
+    const map = {};
+    (allEmps || []).forEach(e => { map[e.id] = e; });
+    scopedEmps.forEach(e => { map[e.id] = e; });
+    setEmployees(Object.values(map).sort((a,b)=>a.name.localeCompare(b.name)));
+    setRequests([...scopedReqs, ...pubMin]);
   }
   useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
 
@@ -295,7 +333,7 @@ function App({ me }){
 
       <footer style={{borderTop:`1px solid ${LINE}`,background:'#fff'}}>
         <div style={{maxWidth:1120,margin:'0 auto',padding:'16px 22px',display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12.5,color:MUTED,flexWrap:'wrap',gap:8}}>
-          <span>Farmers Food GmbH · Urlaubsverwaltung · Stand v9</span>
+          <span>Farmers Food GmbH · Urlaubsverwaltung · Stand v11</span>
           <span style={{color:GREEN_DARK,fontWeight:700}}>Excellence since 1993</span>
         </div>
       </footer>
