@@ -24,7 +24,7 @@ const SICK_SOFT = '#e7effb';
 const PALETTE = ['#4d8600','#2f6fb0','#c0392b','#8e44ad','#0e8a6e','#c2185b','#b8860b','#00838f','#5d4037','#303f9f','#557a1f','#ad1457'];
 const MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 const DOW = ['Mo','Di','Mi','Do','Fr','Sa','So'];
-const TEAMS = ['Management','Randy','Daniel','Kai'];
+const TEAMS = ['Management','Indu 1','Indu 2','GV','Petfood'];
 const ROLE_LABEL = { 'Manager':'Geschäftsführung', 'Team Lead':'Teamleitung', 'Sales':'Mitarbeiter' };
 
 /* ===================== Helpers ===================== */
@@ -295,7 +295,7 @@ function App({ me }){
 
       <footer style={{borderTop:`1px solid ${LINE}`,background:'#fff'}}>
         <div style={{maxWidth:1120,margin:'0 auto',padding:'16px 22px',display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12.5,color:MUTED,flexWrap:'wrap',gap:8}}>
-          <span>Farmers Food GmbH · Urlaubsverwaltung · Stand v8</span>
+          <span>Farmers Food GmbH · Urlaubsverwaltung · Stand v9</span>
           <span style={{color:GREEN_DARK,fontWeight:700}}>Excellence since 1993</span>
         </div>
       </footer>
@@ -656,7 +656,7 @@ function EmpModal({ me, isManager, initial, onClose, onSaved, flash }){
   const [name, setName] = useState(initial?.name || '');
   const [email, setEmail] = useState(initial?.email || '');
   const [role, setRole] = useState(initial?.role || 'Sales');
-  const [team, setTeam] = useState(initial?.team || (me.team!=='Management'?me.team:'Randy'));
+  const [team, setTeam] = useState(initial?.team || (me.team!=='Management'?me.team:'Indu 1'));
   const [days, setDays] = useState(initial?.allowed_days ?? 28);
   const [carried, setCarried] = useState(initial?.carried_days ?? 0);
   const [manual, setManual] = useState(initial?.used_days_manual ?? 0);
