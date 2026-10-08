@@ -288,14 +288,14 @@ function App({ me }){
         {tab==='overview' && <Overview me={me} usedDays={usedDays} sickDays={sickDays} requests={requests} />}
         {tab==='calendar' && <CalendarView me={me} calDate={calDate} setCalDate={setCalDate} employees={employees} requests={requests} empById={empById} canSeeSick={canSeeSick} handlers={handlers} />}
         {tab==='requests' && <MyRequests me={me} requests={requests} refresh={refresh} flash={flash} handlers={handlers} />}
-        {tab==='approvals' && canApprove && <Approvals queue={approvalQueue()} empById={empById} refresh={refresh} flash={flash} />}
+        {tab==='approvals' && canApprove && <Approvals queue={approvalQueue()} empById={empById} usedDays={usedDays} refresh={refresh} flash={flash} />}
         {tab==='team' && (isManager||isLead) && <TeamView employees={isManager?employees:teamEmployees()} usedDays={usedDays} sickDays={sickDays} flash={flash} refresh={refresh} canCarryOver={isManager} />}
         {tab==='admin' && canAdmin && <AdminView me={me} scope={teamEmployees()} refresh={refresh} flash={flash} isManager={isManager} />}
       </main>
 
       <footer style={{borderTop:`1px solid ${LINE}`,background:'#fff'}}>
         <div style={{maxWidth:1120,margin:'0 auto',padding:'16px 22px',display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12.5,color:MUTED,flexWrap:'wrap',gap:8}}>
-          <span>Farmers Food GmbH · Urlaubsverwaltung · Stand v7</span>
+          <span>Farmers Food GmbH · Urlaubsverwaltung · Stand v8</span>
           <span style={{color:GREEN_DARK,fontWeight:700}}>Excellence since 1993</span>
         </div>
       </footer>
@@ -411,7 +411,7 @@ function MyRequests({ me, requests, refresh, flash, handlers }){
 }
 
 /* ===================== Genehmigungen ===================== */
-function Approvals({ queue, empById, refresh, flash }){
+function Approvals({ queue, empById, usedDays, refresh, flash }){
   async function run(promise, msg){
     const { error } = await promise;
     if(error){ flash('Fehler: '+error.message); return; }
@@ -422,12 +422,27 @@ function Approvals({ queue, empById, refresh, flash }){
   const clearChange = (id,msg)=> run(supabase.from('vacation_requests').update({ change_request:null, proposed_start:null, proposed_end:null, proposed_reason:null }).eq('id',id), msg);
   const applyChange = (r)=> run(supabase.from('vacation_requests').update({ start_date:r.proposed_start, end_date:r.proposed_end, reason:r.proposed_reason||'', change_request:null, proposed_start:null, proposed_end:null, proposed_reason:null }).eq('id',r.id), 'Änderung übernommen');
 
+  // Urlaubskonto des Mitarbeiters + Rest nach Freigabe
+  function account(r){
+    const e = empById(r.employee_id) || {};
+    const manual = e.used_days_manual||0, carried = e.carried_days||0;
+    const used = usedDays(e.id,'approved') + manual;
+    const available = (e.allowed_days||0) + carried;
+    const remaining = available - used;
+    const days = countWorkingDays(r.start_date,r.end_date);
+    let after = remaining;
+    if(r.change_request==='delete') after = remaining + days;            // Löschung gibt Tage zurück
+    else if(r.change_request==='change') after = remaining - (countWorkingDays(r.proposed_start,r.proposed_end) - days);
+    else after = remaining - days;                                        // neuer Antrag
+    return { used, remaining, available, after };
+  }
+
   return (
     <>
       <PageTitle title="Genehmigungen" sub="Neue Anträge sowie Änderungs- und Löschwünsche prüfen" />
       <div style={card}>
         {queue.length ? (
-          <table style={table}><thead><tr><Th>Mitarbeiter</Th><Th>Vorgang</Th><Th>Zeitraum</Th><Th>Tage</Th><Th></Th></tr></thead>
+          <table style={table}><thead><tr><Th>Mitarbeiter</Th><Th>Vorgang</Th><Th>Zeitraum</Th><Th>Tage</Th><Th>Urlaubskonto</Th><Th></Th></tr></thead>
           <tbody>
             {queue.map(r=>{
               const e = empById(r.employee_id) || {name:'?'};
@@ -435,6 +450,7 @@ function Approvals({ queue, empById, refresh, flash }){
               const isChange = r.change_request==='change';
               const days = countWorkingDays(r.start_date,r.end_date);
               const newDays = isChange ? countWorkingDays(r.proposed_start,r.proposed_end) : days;
+              const acc = account(r);
               return (
                 <tr key={r.id}>
                   <Td><NameCell name={e.name} sub={e.team && e.team!=='Management'?`Team ${e.team}`:roleLabel(e.role)} /></Td>
@@ -450,6 +466,11 @@ function Approvals({ queue, empById, refresh, flash }){
                     {r.reason?<div style={{fontSize:12,color:MUTED}}>{r.reason}</div>:null}
                   </Td>
                   <Td><b>{isChange?newDays:days}</b></Td>
+                  <Td>
+                    <div><b>{acc.remaining}</b> übrig <span style={{color:MUTED,fontWeight:400}}>/ {acc.available}</span></div>
+                    <div style={{fontSize:12,color:MUTED}}>{acc.used} genommen</div>
+                    <div style={{fontSize:12,fontWeight:700,color: acc.after<0?RED:GREEN_DARK}}>nach Freigabe: {acc.after}{acc.after<0?' ⚠':''}</div>
+                  </Td>
                   <Td><div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
                     {isDelete && <>
                       <button onClick={()=>confirmDelete(r.id)} style={{...btnTiny,background:RED,color:'#fff',border:'none'}}>Löschen</button>
